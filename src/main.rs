@@ -5,6 +5,9 @@ use std::{
     io::{
         self,
         BufRead,
+        BufWriter,
+        LineWriter,
+        Write
     },
     env::{
         args,
@@ -44,13 +47,13 @@ fn main() {
             chosen = dirs.get(0);
         },
         _ => {
-            let value = prompt_user(&mut dirs);
-            chosen = dirs.get(value - 1);
+            prompt_user(&mut dirs).unwrap();
+            chosen = dirs.get(get_input() - 1);
         }
     }
 
     if let Some(dir) = chosen {
-        println!("{}", dir.as_path().display());
+        println!("{}", dir.display());
     } else {
         eprintln!("That doesn't exist.");
         exit(1);
@@ -58,16 +61,18 @@ fn main() {
 }
 
 // Output indexed dir list, get user responds
-fn prompt_user(dirs: &mut Vec<PathBuf>) -> usize {
+fn prompt_user(dirs: &mut Vec<PathBuf>) -> io::Result<()> {
+    let stderr = io::stderr();
+    let mut stderr = LineWriter::new(stderr.lock());
     for (dir, i) in dirs.iter().zip(1..dirs.len()).rev() {
-        eprintln!("{}. {}", i, dir.as_path().display());
+        write!(&mut stderr, "{}. {}\n", i, dir.display())?;
     }
-    get_input()
+    Ok(())
 }
 
 fn get_input() -> usize {
     let stdin = io::stdin();
-    let mut stdin = stdin.lock(); // locking so that it doesn't always need to lock and unlock
+    let mut stdin = stdin.lock();
     let mut input = String::with_capacity(2);
     loop {
         if let Err(_) = stdin.read_line(&mut input) {
