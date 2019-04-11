@@ -1,23 +1,15 @@
 use std::{
-    fs::{
-        self,
-        read_dir
-    },
+    fs::read_dir,
+    process::exit,
+    path::PathBuf,
     io::{
         self,
-        Read,
-        Write,
-        BufReader,
         BufRead,
-    },
-    path::{
-        PathBuf
     },
     env::{
         args,
         var,
     },
-    process::exit
 };
 
 fn main() {
@@ -40,7 +32,7 @@ fn main() {
     // Sort by path length 
     dirs.sort_by(|a, b| a.as_os_str().len().cmp(&b.as_os_str().len()));
 
-    let mut chosen: Option<&PathBuf> = None;
+    let chosen: Option<&PathBuf>;
 
     match dirs.len() {
         0 => {
@@ -65,10 +57,9 @@ fn main() {
     }
 }
 
-
 // Output indexed dir list, get user responds
 fn prompt_user(dirs: &mut Vec<PathBuf>) -> usize {
-    for (dir, i) in dirs.iter().zip(1..) {
+    for (dir, i) in dirs.iter().zip(1..dirs.len()).rev() {
         eprintln!("{}. {}", i, dir.as_path().display());
     }
     get_input()
@@ -79,7 +70,9 @@ fn get_input() -> usize {
     let mut stdin = stdin.lock(); // locking so that it doesn't always need to lock and unlock
     let mut input = String::with_capacity(2);
     loop {
-        stdin.read_line(&mut input);
+        if let Err(_) = stdin.read_line(&mut input) {
+            continue;
+        }
         match input.trim().parse() {
             Ok(v) => return v,
             Err(err) => {
