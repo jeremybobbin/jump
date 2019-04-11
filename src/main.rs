@@ -32,7 +32,7 @@ fn main() {
         .or(var("PWD"))
         .expect("Expecting either SEARCH, HOME or PWD variable.");
 
-    let mut dirs = Vec::new();
+    let mut dirs: Vec<PathBuf> = Vec::new();
 
     jump(to_search, &query, &mut dirs)
         .expect("Something went wrong");
@@ -48,6 +48,7 @@ fn main() {
             exit(1);
         },
         1 => {
+            // If there's only one, just output that dir
             chosen = dirs.get(0);
         },
         _ => {
@@ -65,6 +66,7 @@ fn main() {
 }
 
 
+// Output indexed dir list, get user responds
 fn prompt_user(dirs: &mut Vec<PathBuf>) -> usize {
     for (dir, i) in dirs.iter().zip(1..) {
         eprintln!("{}. {}", i, dir.as_path().display());
@@ -88,6 +90,7 @@ fn get_input() -> usize {
     }
 }
 
+// Recurse dirs in path, push dirs that contain query string onto vector of matching dirs.
 fn jump<P: Into<PathBuf>>(path: P, query: &str, matching: &mut Vec<PathBuf>) -> io::Result<()> {
     let path = path.into();
     let dirs = read_dir(path.clone())?
@@ -108,6 +111,9 @@ fn jump<P: Into<PathBuf>>(path: P, query: &str, matching: &mut Vec<PathBuf>) -> 
             None => continue
         };
 
+        // Will likely only err in the case that it can't
+        // read the directory due to permissions.
+        // That's fine.
         jump(dir.path(), query, matching);
     }
     Ok(())
