@@ -1,3 +1,7 @@
+#![feature(int_error_matching)]
+
+use core::num::IntErrorKind;
+
 use std::{
     fs::read_dir,
     process::exit,
@@ -5,7 +9,6 @@ use std::{
     io::{
         self,
         BufRead,
-        BufWriter,
         LineWriter,
         Write
     },
@@ -78,9 +81,14 @@ fn get_input() -> usize {
         if let Err(_) = stdin.read_line(&mut input) {
             continue;
         }
-        match input.trim().parse() {
+        let trimmed = input.trim();
+        match trimmed.parse() {
             Ok(v) => return v,
             Err(err) => {
+                if *err.kind() == IntErrorKind::Empty {
+                    return 1;
+                    eprintln!("Defaulting to 1");
+                }
                 eprintln!("Bad. {}", err);
                 input.clear();
             }
